@@ -1,3 +1,6 @@
+################################################################################  
+#COCUS CHALLENGE - Leonardo Ribeiro 03-05-2023
+################################################################################
 terraform {
   required_providers {
     aws = {
@@ -42,7 +45,9 @@ module "vpc" {
   }
 }
 
-######PUBLIC
+################################################################################  
+#PUBLIC SG
+################################################################################
 resource "aws_security_group" "public" {
   name = "${local.name}-public-sg"
   description = "Public internet access"
@@ -55,34 +60,28 @@ resource "aws_security_group" "public" {
     CreatedBy   ="Leonardo Ribeiro"
   }
 }
- 
 resource "aws_security_group_rule" "public_http" {
   type        = "ingress"
   from_port   = 80
   to_port     = 80
   protocol    = "tcp"
   cidr_blocks = ["0.0.0.0/0"]
-
   security_group_id = aws_security_group.public.id
 }
-
 resource "aws_security_group_rule" "public_icmp" {
   type        = "ingress"
   from_port   = -1
   to_port     = -1
   protocol    = "icmp"
   cidr_blocks = ["0.0.0.0/0"]
-
   security_group_id = aws_security_group.public.id
 }
-
 resource "aws_security_group_rule" "public_ssh" {
   type        = "ingress"
   from_port   = 22
   to_port     = 22
   protocol    = "tcp"
   cidr_blocks = ["0.0.0.0/0"]
-
   security_group_id = aws_security_group.public.id
 }
 
@@ -92,16 +91,17 @@ resource "aws_security_group_rule" "public_outbound" {
   to_port     = -1
   protocol    = "all"
   cidr_blocks = ["0.0.0.0/0"]
-
   security_group_id = aws_security_group.public.id
 }
 
-#####PRIVATE
+################################################################################  
+#PRIVATE SG
+################################################################################
 resource "aws_security_group" "private" {
   name = "${local.name}-private-sg"
   description = "Private access"
   vpc_id = module.vpc.vpc_id
- 
+    
   tags = {
     Name        = "${local.name}-private-sg"
     Environment = "lab"
@@ -109,44 +109,36 @@ resource "aws_security_group" "private" {
     CreatedBy   ="Leonardo Ribeiro"
   }
 }
-
 resource "aws_security_group_rule" "private_custom" {
   type        = "ingress"
   from_port   = 3110
   to_port     = 3110
   protocol    = "tcp"
   cidr_blocks = ["${var.public_subnet}"]
-
   security_group_id = aws_security_group.private.id
 }
-
 resource "aws_security_group_rule" "private_icmp" {
  type        = "ingress"
   from_port   = -1
   to_port     = -1
   protocol    = "icmp"
   cidr_blocks = ["0.0.0.0/0"]
-
   security_group_id = aws_security_group.private.id
 }
-
 resource "aws_security_group_rule" "private_ssh" {
  type        = "ingress"
   from_port   = 22
   to_port     = 22
   protocol    = "tcp"
   cidr_blocks = ["${var.public_subnet}"]
-
   security_group_id = aws_security_group.private.id
 }
-
 resource "aws_security_group_rule" "private_outbound" {
  type        = "egress"
   from_port   = -1
   to_port     = -1
   protocol    = "icmp"
   cidr_blocks = ["${var.public_subnet}"]
-
   security_group_id = aws_security_group.private.id
 }
 
@@ -186,7 +178,6 @@ resource "aws_instance" "webserver" {
 ################################################################################
 # EC2 DATABASE
 ################################################################################
-
 resource "aws_key_pair" "database_key_pair" {
 key_name = "${local.name}-database-key-pair"
 public_key = tls_private_key.database_rsa.public_key_openssh
@@ -199,9 +190,8 @@ resource "local_file" "database_key" {
 content  = tls_private_key.database_rsa.private_key_pem
 filename = "${local.name}-database-key-pair"
 }
-
+  
 resource "aws_instance" "database" {
-
   ami                    = "${var.ami_id}"
   instance_type          = "${var.instance_type}"
   key_name               = aws_key_pair.database_key_pair.key_name
